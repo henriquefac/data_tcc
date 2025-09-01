@@ -1,2 +1,2 @@
-files
-.env
+/files/*
+/.venv/*

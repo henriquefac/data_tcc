@@ -2,15 +2,17 @@ from dotenv import load_dotenv
 import os
 import json
 
-# from src.url_links import get_data_main
+from src.url_links import get_data_main
 
-# from src.download_files import download_all_audios, download_all_pdfs
+from src.download_files import download_all_audios, download_all_pdfs
 
 from src.process_audio.convert_audio import convert_all_audio
 
 from src.process_audio.convert_audio_seq import convert_all_audio_seq
 
 from src.process_audio.remove_silence import cut_silence_from_audio 
+
+from src.aux.rename_files import modify_file_names_in_dir 
 
 # fluxo de dados
 
@@ -21,7 +23,7 @@ from src.process_audio.remove_silence import cut_silence_from_audio
 # download_all_pdfs()
 
 # baixar áudios de videos
-# download_all_audios(max_workers=10, donwload_if_exists=True)
+#download_all_audios(max_workers=5, donwload_if_exists=True)
 
 # checar arquivo ruim
 
@@ -34,7 +36,7 @@ from src.process_audio.remove_silence import cut_silence_from_audio
 #for f in arquivos_corrompidos:
 #    rm_file(f)
 
-convert_all_audio_seq()
+# convert_all_audio_seq()
 
 # processar arquivos (remover silencio)
 # cut_silence_from_audio(10)
@@ -44,8 +46,8 @@ convert_all_audio_seq()
 
 # modificar nome do arquivo, substituir caractere de todos os arquivos de uma pasta
 
-# dirs = ["atas", "audios", "audio_edit"]
+dirs = ["atas", "audios"]
 
-# for dir in dirs:
-#    modify_file_names_in_dir(dir, "|", "-")
-#    modify_file_names_in_dir(dir, ".", "-")
+for dir in dirs:
+    modify_file_names_in_dir(dir, "|", "-")
+    modify_file_names_in_dir(dir, ".", "-")

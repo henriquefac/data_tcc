@@ -1,42 +1,42 @@
 from configPy import Config, DirManager
-from pytubefix import YouTube
-from pathlib import Path
-import numpy as np
 
 files_dir = Config.get_dir_files()
-sessoes_dir = files_dir["sessoes_url"]
+audios_dir = files_dir["audios"]
+
+path = audios_dir["sessao-de-2-10-2023-Ata73.webm"]
+
+import subprocess
+import numpy as np
+
+sample_rate = 16000
+channels = 1
+bytes_per_sample = 2
+block_size_sec = 0.1
+block_size_bytes = int(block_size_sec * sample_rate * channels * bytes_per_sample)
+
+cmd = [
+    "ffmpeg", "-i", path,
+    "-f", "s16le", "-acodec", "pcm_s16le",
+    "-ac", str(channels), "-ar", str(sample_rate), "-"
+]
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+energies_db = []
+eps = 1e-10
+while True:
+    raw = proc.stdout.read(block_size_bytes)
+    if not raw:
+        break
+    samples = np.frombuffer(raw, np.int16).astype(np.float32) / 32768.0
+    if samples.size == 0:
+        continue
+    rms = np.sqrt(np.mean(samples**2))
+    energies_db.append(20 * np.log10(max(rms, eps)))
+
+energies_db = np.array(energies_db)
 
 
-# Função para recuperar os paths dos arquivos
-def get_files():
-    return [f[1] for f in sessoes_dir.list_files().items()]
-
-def get_link_videos(path: Path):
-    try:
-        data = np.loadtxt(path, dtype=str, delimiter=',', encoding='utf-8', ndmin=2)
-        # transformar url em apenas os nomes de cada sessao
-        vec_func = np.vectorize(lambda x: x.split("|")[-1])
-        data[:, 0] = vec_func(data[:, 0])
-        return data
-    except Exception as e:
-        print(f"Erro {e} ao tentar buscar os links do seguibnte arquivo: {path}")
-        return np.array([])
-
-def collect_all_links():
-    all_data = []
-    for f in get_files():
-        data = get_link_videos(f)
-        if data.size > 0:
-            all_data.extend(data.tolist())
-    return all_data
-
-
-
-all_links = collect_all_links()
-
-sample = all_links[0][1]
-
-yt = YouTube(sample)
-stream = yt.streams.filter(only_audio=True)
-
-print(type(stream))
+silence_threshold = np.percentile(energies_db, 5)
+murmur_threshold = np.percentile(energies_db, 15)
+print("Silêncio:", silence_threshold, "dB")
+print("Murmúrios:", murmur_threshold, "dB")

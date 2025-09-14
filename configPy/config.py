@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 class DirManager():
-    def __init__(self, dir_path: Union[Path, "DirManager"]):
+    def __init__(self, dir_path: Union[Path, "DirManager", str]):
         self.dir_path = Path(dir_path) if isinstance(dir_path, (str, Path)) else dir_path.dir_path
     
     def has_files(self)->bool:

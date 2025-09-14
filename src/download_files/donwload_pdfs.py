@@ -42,7 +42,7 @@ def download_all_pdfs(exists:bool = True):
         urls = get_url_from_file(f)
         for url_parcial in urls:
             url_final = f"{URL_BASE}{FONTE_DOCS}{COMPLEMENTO}{url_parcial}"
-            nome_arquivo = ("|".join(url_parcial.split("|")[2:]))[:-4]
+            nome_arquivo = ("-".join(url_parcial.split("|")[2:]))[:-4]
             destino = atas_path.create_file_path(nome_arquivo, "pdf")
 
 

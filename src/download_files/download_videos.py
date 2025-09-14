@@ -33,7 +33,7 @@ def get_link_videos(path: Path):
     try:
         data = np.loadtxt(path, dtype=str, delimiter=',', encoding='utf-8', ndmin=2)
         # transformar url em apenas os nomes de cada sessao
-        vec_func = np.vectorize(lambda x: ("|".join(x.split("|")[2:]))[:-4])
+        vec_func = np.vectorize(lambda x: ("-".join(x.split("|")[2:]))[:-4])
         data[:, 0] = vec_func(data[:, 0])
         return data
     except Exception as e:

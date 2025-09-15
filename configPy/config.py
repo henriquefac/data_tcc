@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 class DirManager():
     def __init__(self, dir_path: Union[Path, "DirManager", str]):
         self.dir_path = Path(dir_path) if isinstance(dir_path, (str, Path)) else dir_path.dir_path
-    
+        if not self.dir_path.exists:
+            Path.mkdir(self.dir_path, parents=True)
     def has_files(self)->bool:
         return any(self.dir_path.iterdir())
 
@@ -47,11 +48,17 @@ class Config:
     FILE_DIR_PATH = BASE_PATH / "files"
     SRC_DIR_PATH = BASE_PATH / "src"
 
+    OUTPUT_FILES = FILE_DIR_PATH / "output"
+
     @classmethod
     def get_dir_files(cls) -> DirManager:
         return DirManager(cls.FILE_DIR_PATH)
     @classmethod
     def get_dir_src(cls) -> DirManager:
         return DirManager(cls.SRC_DIR_PATH)
+
+    @classmethod
+    def get_dir_output(cls) -> DirManager:
+        return DirManager(cls.OUTPUT_FILES)
 
 

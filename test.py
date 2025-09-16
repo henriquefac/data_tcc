@@ -1,3 +1,6 @@
-from src.download_files import combine_all_csv
+from src.url_links import query, get_df_query
 
-combine_all_csv()
+df = query.query_sessions()
+
+df = query.query_groupby(df, query.GroupKeys.ANO, "list")
+print(df["url"])

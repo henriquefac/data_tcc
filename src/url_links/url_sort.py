@@ -4,7 +4,6 @@ import pandas as pd
 import re
 
 files_dir = Config.get_dir_files()
-
 sessoes_dir = files_dir["sessoes_url"]
 
 
@@ -12,12 +11,14 @@ sessoes_dir = files_dir["sessoes_url"]
 def get_all_files():
     return list(sessoes_dir.list_files().values())
 
-def semp_for_date(url_str:str):
-    return url_str[:-4].split("|")[2]
 
-def aux_get_subname(url_str:str):
-    return semp_for_date(url_str).replace(".", "-") 
+def semp_for_date(url_str: str) -> str:
+    """Extrai a parte central do nome da sessão, sem a extensão."""
+    return url_str.rsplit(".", 1)[0].split("|")[2]
 
+
+def aux_get_subname(url_str: str) -> str:
+    return semp_for_date(url_str).replace(".", "-")
 
 
 def parse_session_date(url_str: str) -> pd.Timestamp:
@@ -27,16 +28,17 @@ def parse_session_date(url_str: str) -> pd.Timestamp:
     """
     try:
         parts = url_str.split("|")
-        session_part = parts[2]  # "sessao-de-6-4.2021"
+        session_part = parts[2]  # ex: "sessao-de-6-4.2021"
 
-        # usar regex para capturar dia, mês, ano
-        m = re.search(r"(\d{1,2})-(\d{1,2})\.(\d{4})", session_part)
+        # Regex: dia-mes.ano (ano pode ter sufixo -n)
+        m = re.search(r"(\d{1,2})-(\d{1,2})\.(\d{4})(?:-\d+)?", session_part)
         if m:
-            d, mm, y = map(int, m.groups())
+            d, mm, y = map(int, m.groups()[:3])
             return pd.Timestamp(year=y, month=mm, day=d)
         return pd.NaT
     except Exception:
         return pd.NaT
+
 
 def load_csv(path_csv: Path) -> pd.DataFrame | None:
     try:
@@ -47,32 +49,31 @@ def load_csv(path_csv: Path) -> pd.DataFrame | None:
         df["year"] = df["date"].dt.year
         df["month"] = df["date"].dt.month
         df["day"] = df["date"].dt.day
-        df["score"] = df["date"].dt.strftime("%Y%m%d").astype(float)
+        df["score"] = df["date"].dt.strftime("%Y%m%d").astype(int)
 
         return df
     except Exception as e:
-        print(f"erro ao carregar csv: {e}")
+        print(f"erro ao carregar csv '{path_csv}': {e}")
         return None
+
 
 def filter_by_year(df: pd.DataFrame, year: int) -> pd.DataFrame:
     """Retorna apenas as sessões de um determinado ano."""
     return df[df["year"] == year].copy()
-# para cada arquivo, extrair df, combinar todas as tbelas e 
-# criar um novo arquivo.csv, com todos os campos
 
-def combine_all_csv(output_dir_path: DirManager| None = None, filter_year: int | None = None):
-    if not output_dir_path:
+
+def combine_all_csv(output_dir_path: DirManager | None = None, filter_year: int | None = None):
+    if output_dir_path is None:
         output_dir_path = sessoes_dir
     namefile = "query_url_links"
-    if filter_year:
-        namefile+= f"_{filter_year}"
+    if filter_year is not None:
+        namefile += f"_{filter_year}"
     
-    file_name_path = output_dir_path.create_file_path(namefile, "csv", True)
+    file_name_path = output_dir_path.create_file_path(namefile, "csv")
     all_dfs = []
     
     for f in get_all_files():
         df = load_csv(f)
-        
         if df is not None and not df.empty:
             all_dfs.append(df)
 
@@ -84,21 +85,23 @@ def combine_all_csv(output_dir_path: DirManager| None = None, filter_year: int |
             combined_df = filter_by_year(combined_df, filter_year)
 
         combined_df.to_csv(file_name_path, index=False, encoding="utf-8")
-        print(f"Arquivo combinado salvo em: {output_dir_path}")
+        print(f"Arquivo combinado salvo em: {file_name_path}")
         return combined_df
     else:
         print("Nenhum dado encontrado nos arquivos.")
         return pd.DataFrame()
 
-def get_df_query(year:int | None):
+
+def get_df_query(year: int | None = None):
     try:
         namefile = "query_url_links"
         if year:
             namefile += f"_{year}"
 
-        filequery = sessoes_dir[namefile]
+        # garantir que estamos pegando o arquivo certo
+        filequery = sessoes_dir.get_file_path(namefile, "csv")
         df = pd.read_csv(filequery)
         
-        return filter_by_year(df, year)if year else df
+        return filter_by_year(df, year) if year else df
     except Exception:
-        return combine_all_csv(year)
+        return combine_all_csv(output_dir_path=None, filter_year=year)

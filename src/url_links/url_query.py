@@ -91,10 +91,34 @@ def query_groupby(
 
     return result
 
+def query_groupby_steeps(df:pd.DataFrame, 
+                         key: GroupKeys,
+                         interest_data: str,
+                         n_of_itens : int):
+    df_groupby = query_groupby(df, key, "list")[interest_data]
+    
+    samples = []
 
+    for group_key, values in df_groupby.items():
+        total_lines = len(values)
+
+        if total_lines <= n_of_itens:
+            sampled = values
+        else:
+            indexes = np.linspace(0, total_lines - 1, n_of_itens, dtype=int)
+            sampled = [values[i] for i in indexes]
+
+        samples.append(pd.DataFrame({
+            key.value: [group_key] * len(sampled),
+            interest_data : sampled
+        }))
+
+    result = pd.concat(samples, ignore_index = True).groupby(key.value, sort=False, dropna=False).agg(list)
+    return result
+    
 def query_groupby_dict_steeps(
     df: pd.DataFrame,
-    key: str,
+    key: GroupKeys | list[GroupKeys],
     value_col: str,
     n_of_lines: int
 ) -> dict:
@@ -103,14 +127,23 @@ def query_groupby_dict_steeps(
     {chave: [valores]} onde cada lista é reduzida para no
     máximo `n_of_lines` elementos de forma equidistante.
     """
-    import numpy as np
-
+    
+
+    
     # Ordenar pelo score para garantir consistência
     if "score" in df.columns:
         df = df.sort_values("score", ascending=True)
 
+
+    if isinstance(key, list):
+        keys = [k.value for k in key]
+    else:
+        keys = [key.value]
+
+
+
     result = {}
-    for group_key, group_df in df.groupby(key, sort=False):
+    for group_key, group_df in df.groupby(keys, sort=False):
         total_lines = group_df.shape[0]
 
         if total_lines <= n_of_lines:
@@ -123,4 +156,4 @@ def query_groupby_dict_steeps(
 
     return result
 
-__all__ = ["query_by_steeps", "query_groupby", "query_sessions", "query_groupby_dict_steep"]
+__all__ = ["query_by_steeps", "query_groupby","query_groupby_steeps", "query_sessions", "query_groupby_dict_steep"]

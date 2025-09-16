@@ -14,7 +14,7 @@ get_data_main(True)
 
 
 # baixar todas as atas dos links
-download_all_pdfs()
+# download_all_pdfs()
 
 # Baixar todos os audios
-download_all_audios(10)
+# download_all_audios(10)

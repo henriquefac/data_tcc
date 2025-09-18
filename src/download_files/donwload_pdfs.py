@@ -19,6 +19,7 @@ atas_path = files_dir.create_dir("atas") # diretório das atas de reunião
 
 
 
+
 # listar arquivos csv com url's das atas das sessoes
 
 def get_files():

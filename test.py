@@ -1,12 +1,9 @@
 from src.url_links import query
+from src.download_files import get_files_by_year, TypeKeys
 import pandas as pd
+import numpy as np
 from json import loads, dumps
 
-df = query.query_sessions()
 
-df = query.query_groupby_steeps(df, query.GroupKeys.ANO, "url", 4)
-print(dumps(df.to_json(), indent=4))
-
-
-
+print(get_files_by_year(4, [TypeKeys.URL, TypeKeys.LINK]))
 

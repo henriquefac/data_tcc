@@ -22,4 +22,11 @@ def get_files_by_year(n:int, key:TypeKeys | list[TypeKeys]):
     
     return new_dict
 
+def get_files_by_year_url(n: int):
+    return get_files_by_year(n, TypeKeys.URL)
 
+def get_files_by_year_link(n: int):
+    return get_files_by_year(n, TypeKeys.LINK)
+
+def get_files_by_year_url_link(n: int):
+    return get_files_by_year(n, [TypeKeys.URL, TypeKeys.LINK])

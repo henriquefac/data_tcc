@@ -37,13 +37,14 @@ def query_by_group(key_str: str, n_lines: int, keys_list_atr: list[str]):
     return dfs_samples
         
 
-def query_by_steeps(df: pd.DataFrame, n_of_lines: int) -> pd.DataFrame:
+def query_by_steeps(df: pd.DataFrame, n_of_lines: int | None) -> pd.DataFrame:
     """
     Retorna um subconjunto do DataFrame com `n_of_lines` linhas
     escolhidas de forma equidistante ao longo do DataFrame.
     """
     total_lines = df.shape[0]
-
+    if not n_of_lines:
+        n_of_lines = total_lines
     if total_lines == 0 or n_of_lines <= 0:
         return pd.DataFrame(columns=df.columns)
 

@@ -2,6 +2,9 @@ from pathlib import Path
 from typing import Union
 import os
 from dotenv import load_dotenv
+import tempfile
+
+load_dotenv()
 
 class DirManager():
     def __init__(self, dir_path: Union[Path, "DirManager", str]):

@@ -2,15 +2,13 @@ from .download_methods import download_single_file_audio, download_single_file_p
 from .get_data_pac import PacFULL, PacATAS, PacAUDIOS, Pac
 from configPy import Config, DirManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
+from .aux import hash_map
 N_WORKERS = 5
 
 file_dir = Config.get_dir_files()
 
 # diretório para amostras
 samples_dir = file_dir.create_dir("samples")
-samples_atas_dir = samples_dir.create_dir("atas")
-samples_audios_dir = samples_dir.create_dir("audios")
 
 
 def aux_root_dir(pac_files: Pac, dir_sample_type: DirManager):
@@ -24,6 +22,7 @@ def _download_pac(
     pac_files: Pac,
     dir_sample_type: DirManager,
     download_fn,
+    label: str,
     n_workers: int | None = None,
 ):
     if n_workers is None:
@@ -53,6 +52,11 @@ def _download_pac(
                 print(res)
             except Exception as e:
                 print(f"Falha relacionado ao processo de paralização: {e}")
+    
+    if label == "atas":
+        hash_map.add_hash_ata(pac_files.hash, samples_dir)
+    else:
+        hash_map.add_hash_ata(pac_files.hash, samples_dir)
 
     return root_dir
 
@@ -62,8 +66,9 @@ def download_pac_full(pac_files: PacFULL, n_workers: int | None = None):
         n_workers = N_WORKERS
 
     # diretórios raiz
-    root_dir_atas = samples_atas_dir.create_dir(f"{pac_files.hash}_sample")
-    root_dir_audios = samples_audios_dir.create_dir(f"{pac_files.hash}_sample")
+    root_dir = samples_dir.create_dir(f"{pac_files.hash}_sample")
+    root_dir_atas = root_dir.create_dir("atas")
+    root_dir_audios =root_dir.create_dir("audios")
 
     pac_structure = pac_files.structure
 
@@ -99,14 +104,15 @@ def download_pac_full(pac_files: PacFULL, n_workers: int | None = None):
 
     process_downloads(file_tuple_args_atas, download_single_file_pdf, "atas")
     process_downloads(file_tuple_args_audios, download_single_file_audio, "áudios")
-
+    
+    hash_map.add_hash_ata_audio(pac_files.hash, samples_dir)
     return root_dir_atas, root_dir_audios
 
 
 DOWNLOAD_DISPATCH = {
-    PacATAS: (samples_atas_dir, download_single_file_pdf, "atas"),
-    PacAUDIOS: (samples_audios_dir, download_single_file_audio, "áudios"),
-    PacFULL: (download_pac_full, None, "atas+áudios"),
+    PacATAS: (samples_dir, download_single_file_pdf, "atas"),
+    PacAUDIOS: (samples_dir, download_single_file_audio, "audios"),
+    PacFULL: (download_pac_full, None, "atas+audios"),
 }
 
 
@@ -118,7 +124,7 @@ def download_from_pac(pac: PacATAS | PacAUDIOS | PacFULL, n_workers: int | None 
                 if pac_cls is PacFULL:
                     dir_res = arg1(pac, n_workers)  # aqui arg1 é a função
                 else:
-                    dir_res = _download_pac(pac, arg1, arg2, n_workers)  # dir, fn
+                    dir_res = _download_pac(pac, arg1, arg2, label, n_workers)  # dir, fn
                 return f"Download de pac de {label} feito em: {dir_res}"
             except Exception as e:
                 return f"Falha ao realizar o download do pac de {label} {hash}: {e}"

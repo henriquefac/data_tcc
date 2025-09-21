@@ -1,9 +1,10 @@
-from src.url_links import query
-from src.download_files import get_files_by_year, TypeKeys
-import pandas as pd
-import numpy as np
-from json import loads, dumps
+from src.download_files import (download_from_pac, 
+    get_files_by_year_url, get_files_by_year_link, get_files_by_year_url_link)
 
 
-print(get_files_by_year(4, [TypeKeys.URL, TypeKeys.LINK]))
+pac_url = get_files_by_year_url_link(4)
 
+print(pac_url.hash)
+print(pac_url.structure)
+
+print(download_from_pac(pac_url))

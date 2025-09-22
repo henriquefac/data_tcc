@@ -9,7 +9,7 @@ sessoes_dir = files_dir["sessoes_url"]
 
 # get all files
 def get_all_files():
-    return list(sessoes_dir.list_files().values())
+    return list(sessoes_dir.iter_files())
 
 
 def semp_for_date(url_str: str) -> str:
@@ -69,7 +69,7 @@ def combine_all_csv(output_dir_path: DirManager | None = None, filter_year: int 
     if filter_year is not None:
         namefile += f"_{filter_year}"
     
-    file_name_path = output_dir_path.create_file_path(namefile, "csv")
+    file_name_path = output_dir_path.create_file_path(namefile, "csv", overwrite=True)
     all_dfs = []
     
     for f in get_all_files():
@@ -99,7 +99,7 @@ def get_df_query(year: int | None = None):
             namefile += f"_{year}"
 
         # garantir que estamos pegando o arquivo certo
-        filequery = sessoes_dir.get_file_path(namefile, "csv")
+        filequery = sessoes_dir.create_file_path(namefile, "csv")
         df = pd.read_csv(filequery)
         
         return filter_by_year(df, year) if year else df

@@ -84,7 +84,7 @@ def fetch_and_parse(month: str):
 
 # FUNCAO PRINCIPAL PARA ADIQUIRIR OS DADOS
 def get_data_main(get_data: bool = False):
-    if sessoes_dir.has_files() and not get_data:
+    if not sessoes_dir.is_empty() and not get_data:
         return sessoes_dir
     # MES QUE OCORRRAM AS SESSOES
     session_month = list(data_sessoes()) # lista de strings com todas as sessões

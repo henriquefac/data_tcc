@@ -54,9 +54,9 @@ def _download_pac(
                 print(f"Falha relacionado ao processo de paralização: {e}")
     
     if label == "atas":
-        hash_map.add_hash_ata(pac_files.hash, samples_dir)
+        hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True)
     else:
-        hash_map.add_hash_ata(pac_files.hash, samples_dir)
+        hash_map.add_hash_entry(pac_files.hash, samples_dir, audio=True)
 
     return root_dir
 
@@ -105,7 +105,7 @@ def download_pac_full(pac_files: PacFULL, n_workers: int | None = None):
     process_downloads(file_tuple_args_atas, download_single_file_pdf, "atas")
     process_downloads(file_tuple_args_audios, download_single_file_audio, "áudios")
     
-    hash_map.add_hash_ata_audio(pac_files.hash, samples_dir)
+    hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True, audio=True)
     return root_dir_atas, root_dir_audios
 
 

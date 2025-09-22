@@ -1,6 +1,4 @@
-from configPy import Config, DirManager
-from pathlib import Path
-import numpy as np
+from configPy import DirManager
 import requests
 import os
 

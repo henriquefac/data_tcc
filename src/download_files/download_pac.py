@@ -1,8 +1,8 @@
-from .download_methods import download_single_file_audio, download_single_file_pdf
-from .get_data_pac import PacFULL, PacATAS, PacAUDIOS, Pac
+from src.download_files.download_methods import download_single_file_audio, download_single_file_pdf
+from src.download_files.pac_files import PacFULL, PacATAS, PacAUDIOS, Pac
+from src.download_files.aux import hash_map
 from configPy import Config, DirManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .aux import hash_map
 N_WORKERS = 5
 
 file_dir = Config.get_dir_files()

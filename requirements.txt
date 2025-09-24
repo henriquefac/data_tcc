@@ -47,6 +47,8 @@ openai-whisper==20250625
 packaging==25.0
 pandas==2.3.2
 pathlib==1.0.1
+pdf2image==1.17.0
+pillow==11.3.0
 propcache==0.3.2
 prov==2.1.1
 puremagic==1.30

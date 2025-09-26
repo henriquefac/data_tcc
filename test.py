@@ -1,10 +1,5 @@
-from src.download_files import (
-get_files_by_year_link, get_files_by_year_url,
-get_files_by_porcent, get_files_by_year_url_link, download_from_pac
-)
-pac_url = get_files_by_year_url(2)
+from src.download_files import pac_files
 
-print(pac_url.hash)
-print(pac_url.structure)
+pacs_10 = list(pac_files.get_files_by_porcent_link(pac_files.DotValue.DOT10))
 
-print(download_from_pac(pac_url))
+print(pacs_10[0])

@@ -1,7 +1,8 @@
 from src.download_files.download_methods import download_single_file_audio, download_single_file_pdf
 from src.download_files.pac_files import PacFULL, PacATAS, PacAUDIOS, Pac
 from src.download_files.aux import hash_map
-from configPy import Config, DirManager
+from src.download_files.download_methods import PackageFiles, TempPackageFiles
+from configPy import Config, DirManager, TempDirManager
 from concurrent.futures import ThreadPoolExecutor, as_completed
 N_WORKERS = 5
 
@@ -24,12 +25,19 @@ def _download_pac(
     download_fn,
     label: str,
     n_workers: int | None = None,
-):
+    use_temp: bool = False
+)->PackageFiles| TempPackageFiles:
     if n_workers is None:
         n_workers = N_WORKERS
 
+    base_dir = dir_sample_type
+
+    if use_temp:
+        temp_dir = TempDirManager.create_in_dir(dir_sample_type.dir_path)
+        base_dir = temp_dir
+
     # root dir
-    root_dir, pac_structure, dict_dirs = aux_root_dir(pac_files, dir_sample_type)
+    root_dir, pac_structure, dict_dirs = aux_root_dir(pac_files, base_dir)
 
     # monta lista de arquivos
     files_tuples_args = [
@@ -52,23 +60,32 @@ def _download_pac(
                 print(res)
             except Exception as e:
                 print(f"Falha relacionado ao processo de paralização: {e}")
-    
-    if label == "atas":
-        hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True)
-    else:
-        hash_map.add_hash_entry(pac_files.hash, samples_dir, audio=True)
+    if not use_temp:
+        if label == "atas":
+            hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True)
+        else:
+            hash_map.add_hash_entry(pac_files.hash, samples_dir, audio=True)
+    if use_temp:
+        return TempPackageFiles(root_dir=root_dir, base_dir=base_dir)
+    return PackageFiles(root_dir=root_dir, base_dir=base_dir)
 
-    return root_dir
 
-
-def download_pac_full(pac_files: PacFULL, n_workers: int | None = None):
+def download_pac_full(pac_files: PacFULL, 
+                      n_workers: int | None = None, 
+                      use_temp: bool = False
+    )->PackageFiles | TempPackageFiles:
     if n_workers is None:
         n_workers = N_WORKERS
 
+    base_dir = samples_dir
+
+    if use_temp:
+        base_dir = TempDirManager.create_in_dir(base_dir)
+
     # diretórios raiz
-    root_dir = samples_dir.create_dir(f"{pac_files.hash}_sample")
-    root_dir_atas = root_dir.create_dir("atas")
-    root_dir_audios =root_dir.create_dir("audios")
+    root_dir = base_dir.create_dir(f"{pac_files.hash}_sample")
+    root_dir_atas = root_dir.create_dir("ata")
+    root_dir_audios =root_dir.create_dir("audio")
 
     pac_structure = pac_files.structure
 
@@ -104,9 +121,11 @@ def download_pac_full(pac_files: PacFULL, n_workers: int | None = None):
 
     process_downloads(file_tuple_args_atas, download_single_file_pdf, "atas")
     process_downloads(file_tuple_args_audios, download_single_file_audio, "áudios")
-    
-    hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True, audio=True)
-    return root_dir_atas, root_dir_audios
+    if not use_temp:    
+        hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True, audio=True)
+    if use_temp:
+        return TempPackageFiles(root_dir=root_dir, base_dir=base_dir)
+    return PackageFiles(root_dir=root_dir, base_dir=base_dir)
 
 
 DOWNLOAD_DISPATCH = {

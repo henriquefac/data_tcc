@@ -26,3 +26,12 @@ def get_files_by_porcent(
             tuplas = list(df_part[year][keys].itertuples(index=False, name=None))
             new_dict[year] = tuplas
         yield pac_class.get_pac(new_dict, ["year", f"{dot_value.name}[{i}]"] + keys)
+
+def get_files_by_porcent_url(dot_value: DotValue)->Generator:
+    return get_files_by_porcent(dot_value, TypeKeys.URL)
+
+def get_files_by_porcent_link(dot_value: DotValue)->Generator:
+    return get_files_by_porcent(dot_value, TypeKeys.LINK)
+
+def get_files_by_porcent_url_link(dot_value: DotValue)->Generator:
+    return get_files_by_porcent(dot_value, [TypeKeys.LINK, TypeKeys.URL])

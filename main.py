@@ -1,14 +1,9 @@
-from dotenv import load_dotenv
-import os
-import json
+from src.download_files import download_from_pac, pac_files
 
-from configPy import Config, DirManager
+pacs = list(pac_files.get_files_by_porcent_url(pac_files.DotValue.DOT5))
 
-from src.tesserect_PIPE import OCR_blob_start
 
-file_dir = Config.get_dir_files()
-sample_dir = file_dir["samples"]
+package = download_from_pac(pacs[0], use_temp=True)
 
-sample_atas_dir = sample_dir["atas"]
-
-OCR_blob_start(sample_atas_dir)
+print(package.root_dir)
+package.cleanup()

@@ -1,20 +1,8 @@
-from dotenv import load_dotenv
-import os
-import json
+from src.download_files import download_from_pac, pac_files
 
-from configPy import Config, DirManager
+pacs = list(pac_files.get_files_by_porcent_url(pac_files.DotValue.DOT5))
 
-from src.url_links import get_data_main
-from src.download_files import download_all_audios, download_all_pdfs
+package = download_from_pac(pacs[0], use_temp=True)
 
-# Deve buscrar as url e para baixar as atas de reunião
-# e os links dos videos do youtube das sessões
-get_data_main(True)
-
-
-
-# baixar todas as atas dos links
-# download_all_pdfs()
-
-# Baixar todos os audios
-# download_all_audios(10)
+print(package.root_dir)
+package.cleanup()

@@ -7,6 +7,7 @@ import numpy as np
 
 
 class DotValue(Enum):
+    DOT5  = (0.05, 19)
     DOT10 = (0.1, 9)
     DOT20 = (0.2, 4)
     DOT25 = (0.25, 3)

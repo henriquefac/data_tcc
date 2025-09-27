@@ -134,18 +134,34 @@ DOWNLOAD_DISPATCH = {
     PacFULL: (download_pac_full, None, "atas+audios"),
 }
 
-
-def download_from_pac(pac: PacATAS | PacAUDIOS | PacFULL, n_workers: int | None = None):
-    hash = pac.hash
+def download_from_pac(
+    pac: PacATAS | PacAUDIOS | PacFULL,
+    n_workers: int | None = None,
+    use_temp: bool = False
+) -> PackageFiles | TempPackageFiles:
+    """
+    Faz o download de um pacote PAC (ATAS, AUDIOS ou FULL),
+    retornando um PackageFiles (persistente) ou TempPackageFiles (temporário).
+    """
     for pac_cls, (arg1, arg2, label) in DOWNLOAD_DISPATCH.items():
         if isinstance(pac, pac_cls):
             try:
                 if pac_cls is PacFULL:
-                    dir_res = arg1(pac, n_workers)  # aqui arg1 é a função
+                    # aqui arg1 é a função especializada
+                    return arg1(pac, n_workers=n_workers, use_temp=use_temp)
                 else:
-                    dir_res = _download_pac(pac, arg1, arg2, label, n_workers)  # dir, fn
-                return f"Download de pac de {label} feito em: {dir_res}"
+                    # aqui arg1 é o diretório base e arg2 é a função de download
+                    return _download_pac(
+                        pac,
+                        dir_sample_type=arg1,
+                        download_fn=arg2,
+                        label=label,
+                        n_workers=n_workers,
+                        use_temp=use_temp,
+                    )
             except Exception as e:
-                return f"Falha ao realizar o download do pac de {label} {hash}: {e}"
+                raise RuntimeError(
+                    f"Falha ao realizar o download do pac de {label} ({pac.hash}): {e}"
+                ) from e
 
-    return f"Tipo de pac {type(pac).__name__} não suportado."
+    raise TypeError(f"Tipo de pac {type(pac).__name__} não suportado.")

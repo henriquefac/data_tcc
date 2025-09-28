@@ -46,20 +46,23 @@ def _download_pac(
         for url, filename in tuplas
     ]
 
-    # download em batches
-    for i in range(0, len(files_tuples_args), n_workers):
-        batch = files_tuples_args[i : i + n_workers]
-        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        for i in range(0, len(files_tuples_args), n_workers):
+            batch = files_tuples_args[i: i+ n_workers]
+
             futures = [
-                executor.submit(download_fn, url, filename, output_dir)
+                executor.submit(download_fn, url, filename, output_dir) 
                 for url, filename, output_dir in batch
             ]
-        for future in as_completed(futures):
-            try:
-                res = future.result()
-                print(res)
-            except Exception as e:
-                print(f"Falha relacionado ao processo de paralização: {e}")
+
+            for future in as_completed(futures):
+                try:
+                    res = future.result()
+                    print(res)
+                except Exception as e:
+                    print(f"Falha relacionada ao processo de parelização: {e}")
+
     if not use_temp:
         if label == "atas":
             hash_map.add_hash_entry(pac_files.hash, samples_dir, ata=True)
@@ -105,19 +108,19 @@ def download_pac_full(pac_files: PacFULL,
     ]
 
     def process_downloads(file_args, download_fn, label):
-        for i in range(0, len(file_args), n_workers):
-            batch = file_args[i : i + n_workers]
-            with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            for i in range(0, len(file_args), n_workers):
+                batch = file_args[i : i + n_workers]
                 futures = [
                     executor.submit(download_fn, url, filename, output_dir)
                     for url, filename, output_dir in batch
                 ]
-            for future in as_completed(futures):
-                try:
-                    res = future.result()
-                    print(res)
-                except Exception as e:
-                    print(f"Falha no download de {label}: {e}")
+                for future in as_completed(futures):
+                    try:
+                        res = future.result()
+                        print(res)
+                    except Exception as e:
+                        print(f"Falha no download de {label}: {e}")
 
     process_downloads(file_tuple_args_atas, download_single_file_pdf, "atas")
     process_downloads(file_tuple_args_audios, download_single_file_audio, "áudios")

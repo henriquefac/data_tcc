@@ -1,12 +1,13 @@
 from pathlib import Path
 from typing import Union, Iterator
 import os
-from dotenv import load_dotenv
 import tempfile
+from dotenv import load_dotenv
 
 load_dotenv()
 
-class DirManager():
+
+class DirManager:
     def __init__(self, dir_path: Union[Path, "DirManager", str]):
         if isinstance(dir_path, DirManager):
             self.dir_path = dir_path.dir_path
@@ -18,39 +19,53 @@ class DirManager():
         if not self.dir_path.is_dir():
             raise NotADirectoryError(f"Não é um diretório: {self.dir_path}")
 
-    def exists(self)->bool:
+    def exists(self) -> bool:
         return self.dir_path.exists()
 
-    def is_empty(self)->bool:
-        return not any(self.dir_path.iterdir())
+    def is_empty(self) -> bool:
+        return not any(os.scandir(self.dir_path))
 
-    def list_dirs(self)->dict[str, 'DirManager']:
-        return {dir.name : DirManager(dir) for dir in self.dir_path.iterdir() if dir.is_dir()}
-    
+    def list_dirs(self) -> dict[str, "DirManager"]:
+        return {
+            entry.name: DirManager(entry.path)
+            for entry in os.scandir(self.dir_path)
+            if entry.is_dir()
+        }
 
-    def list_files(self)->dict[str, Path]:
-        return {file.name : file for file in self.dir_path.iterdir() if file.is_file()}
-    
-    def iter_dirs(self)-> Iterator["DirManager"]:
-        for d in self.dir_path.iterdir():
-            if d.is_dir():
-                yield DirManager(d)
+    def list_files(self) -> dict[str, Path]:
+        return {
+            entry.name: Path(entry.path)
+            for entry in os.scandir(self.dir_path)
+            if entry.is_file()
+        }
 
-    def iter_files(self)-> Iterator[Path]:
-        for f in self.dir_path.iterdir():
-            if f.is_file():
-                yield f
+    def iter_dirs(self) -> Iterator["DirManager"]:
+        for entry in os.scandir(self.dir_path):
+            if entry.is_dir():
+                yield DirManager(entry.path)
 
-    def create_dir(self, name:str)->'DirManager':
+    def iter_files(self) -> Iterator[Path]:
+        for entry in os.scandir(self.dir_path):
+            if entry.is_file():
+                yield Path(entry.path)
+
+    def iter_all_files(self) -> Iterator[Path]:
+        # mais rápido que recursão manual
+        for root, _, files in os.walk(self.dir_path):
+            for file in files:
+                yield Path(root) / file
+
+    def create_dir(self, name: str) -> "DirManager":
         new_dir: Path = self.dir_path / name
         new_dir.mkdir(parents=True, exist_ok=True)
         return DirManager(new_dir)
 
-    def create_file_path(self, name:str, suffix:str, overwrite: bool = False)->Path:
+    def create_file_path(self, name: str, suffix: str, overwrite: bool = False) -> Path:
         new_file_path: Path = self.dir_path / f"{name}.{suffix}"
         if new_file_path.exists() and not overwrite:
             raise ValueError(f"O arquivo <{new_file_path}> já existe")
         return new_file_path
+
     def __getitem__(self, key: str) -> "DirManager":
         dirs = self.list_dirs()
         if key in dirs:
@@ -58,6 +73,7 @@ class DirManager():
         raise KeyError(f"Diretório '{key}' não encontrado em {self.dir_path}")
 
     def get_any(self, key: str) -> "DirManager | Path":
+        # Busca mais rápida: primeiro nível, depois recursivo
         dirs = self.list_dirs()
         files = self.list_files()
         if key in dirs:
@@ -76,7 +92,6 @@ class DirManager():
 
     def __repr__(self) -> str:
         return f"DirManager({self.dir_path})"
-    # Paths
 
 
 class TempDirManager(DirManager):
@@ -111,6 +126,7 @@ class Config:
     @classmethod
     def get_dir_files(cls) -> DirManager:
         return DirManager(cls.FILE_DIR_PATH)
+
     @classmethod
     def get_dir_src(cls) -> DirManager:
         return DirManager(cls.SRC_DIR_PATH)
@@ -118,5 +134,3 @@ class Config:
     @classmethod
     def get_dir_output(cls) -> DirManager:
         return DirManager(cls.OUTPUT_FILES)
-
-

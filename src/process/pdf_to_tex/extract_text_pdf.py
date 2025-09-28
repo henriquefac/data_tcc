@@ -6,6 +6,8 @@ from configPy import Config
 
 output_dir = Config.get_dir_output()
 
+# output para atas
+ata_output_dir = output_dir.create_dir("ata")
 
 def extract_text_from_pdf(package: PackageFiles | TempPackageFiles):
     results = {}
@@ -15,11 +17,11 @@ def extract_text_from_pdf(package: PackageFiles | TempPackageFiles):
         pdf_path = Path(f)
 
         # 1. tenta extração convencional
-        text = get_pdf_text(pdf_path, output=output_dir)
+        text = get_pdf_text(pdf_path, output=ata_output_dir)
 
         # 2. se falhar ou vier muito curto, cai para OCR
-        if not text or len(text.split()) < 10:
-            text = ocr_tesseract(pdf_path, output=output_dir)
+        if not text:
+            text = ocr_tesseract(pdf_path, output=ata_output_dir)
 
         results[pdf_path.name] = text
 

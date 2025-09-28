@@ -1,18 +1,26 @@
-from configPy import TempDirManager
 from pdf2image import convert_from_path
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
 
-def get_dir_images(pdf_path: Path, dpi: int = 300) -> tuple[TempDirManager, int]:
+
+def get_images_buffer(pdf_path: Path, dpi: int = 300) -> list[BytesIO]:
     """
-    Converte PDF em imagens (uma por página).
-    Retorna o diretório temporário com imagens e o número de páginas.
+    Converte PDF em uma lista de buffers de imagens (PNG em memória).
+    Não cria arquivos temporários em disco.
     """
     pdf_pages = convert_from_path(pdf_path, dpi=dpi)
-    temp_dir = TempDirManager()
+    buffers: list[BytesIO] = []
 
-    for i, page in enumerate(pdf_pages, start=1):
-        filename = f"page_{i}"
-        file_path = temp_dir.create_file_path(filename, "jpg", overwrite=True)
-        page.save(file_path, "JPEG")
+    for page in pdf_pages:
+        # escala de cinza para reduzir tamanho
+        page = page.convert("L")
+        # opcional: binarização (melhora OCR em alguns casos)
+        # page = page.point(lambda x: 0 if x < 180 else 255, "1")
 
-    return temp_dir, len(pdf_pages)
+        buffer = BytesIO()
+        page.save(buffer, format="PNG")
+        buffer.seek(0)
+        buffers.append(buffer)
+
+    return buffers

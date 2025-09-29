@@ -42,3 +42,19 @@ def add_hash_entry(hash: str, dir: DirManager, ata: bool = False, audio: bool = 
         writer.writerow(["hash", "ata", "audio"])
         for h, values in data.items():
             writer.writerow([h] + values)
+
+def hash_exists(hash: str, dir: DirManager) -> bool:
+    """
+    Verifica se um hash já está registrado no hash_map.csv.
+    Retorna True se existir, False caso contrário.
+    """
+    hash_file_map = get_hash_map(dir)
+
+    with open(hash_file_map, "r", encoding="utf-8") as file_csv:
+        reader = csv.reader(file_csv)
+        next(reader, None)  # pula o cabeçalho
+        for row in reader:
+            if row and row[0] == hash:
+                return True
+    return False
+

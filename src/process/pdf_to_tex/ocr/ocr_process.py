@@ -28,41 +28,54 @@ def clean_text(text: str) -> str:
     return text
 
 
-def ocr_page(img_buffer: BytesIO, page_num: int) -> tuple[int, str]:
+def ocr_page(img_buffer: BytesIO, page_num: int, tesseract_config: str = "", lang: str = "por") -> tuple[int, str]:
     """
     Realiza OCR em uma única página recebida como buffer.
     """
     with Image.open(img_buffer) as img:
-        raw_text = pytesseract.image_to_string(img)
+        raw_text = pytesseract.image_to_string(img, lang=lang, config=tesseract_config)
     return page_num, clean_text(raw_text)
 
 
-def ocr_tesseract(path: Path, output: DirManager, dpi: int = 300, workers: int = 10) -> Path | None:
+def ocr_tesseract(
+    path: Path, 
+    output: DirManager, 
+    dpi: int = 300, 
+    workers: int = 10,
+    oem: int = 3,          # default engine mode
+    psm: int = 3,          # default page segmentation mode
+    lang: str = "por"      # idioma
+) -> Path | None:
+    """
+    Executa OCR em um PDF e salva o texto processado em arquivo .txt
+    """
     namefile = path.stem
     try:
         output_file_path = output.create_file_path(namefile, "txt")
     except Exception as e:
         print(f"Arquivo já existe: {e}")
         return None
-    print(f"Realzando ocr do seguinte arquivo: {path}")
+
+    print(f"Realizando OCR do arquivo: {path}")
+
     # converte PDF em imagens em memória
     pages = get_images_buffer(path, dpi=dpi)
     total = len(pages)
     results: list[tuple[int, str]] = []
-  
+
+    # configurações do Tesseract
+    tesseract_config = f"--oem {oem} --psm {psm}"
+
     done = 0
-    # OCR paralelo
-    from concurrent.futures import ThreadPoolExecutor, as_completed
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(ocr_page, pages[i], i+1): i+1
+            executor.submit(ocr_page, pages[i], i+1, tesseract_config, lang): i+1
             for i in range(len(pages))
         }
 
         for future in as_completed(futures):
             try:
                 page_num, text = future.result()
-                
                 results.append((page_num, text))
                 done += 1
                 print(f"[{done}/{total}] Página {page_num} processada")

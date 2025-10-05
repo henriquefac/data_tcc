@@ -5,8 +5,10 @@ import tempfile
 from dotenv import load_dotenv
 
 load_dotenv()
-
-
+try:
+    load_dotenv(dotenv_path="token.env")
+except:
+    print("Não existe arquivo token.env")
 class DirManager:
     def __init__(self, dir_path: Union[Path, "DirManager", str]):
         if isinstance(dir_path, DirManager):
@@ -122,7 +124,9 @@ class Config:
     FILE_DIR_PATH = BASE_PATH / "files"
     SRC_DIR_PATH = BASE_PATH / "src"
     OUTPUT_FILES = FILE_DIR_PATH / "output"
-
+    
+    NOISE_MODELS_DIR = BASE_PATH / "rnnoise-models"
+    
     @classmethod
     def get_dir_files(cls) -> DirManager:
         return DirManager(cls.FILE_DIR_PATH)
@@ -134,3 +138,44 @@ class Config:
     @classmethod
     def get_dir_output(cls) -> DirManager:
         return DirManager(cls.OUTPUT_FILES)
+
+    @classmethod
+    def get_dir_noise_models(cls) -> DirManager:
+        return DirManager(cls.NOISE_MODELS_DIR)
+
+class EnvManager:
+    # 1. Padrão Singleton: Garante que só há uma instância
+    _instance = None
+
+    def __new__(cls):
+        # Implementação do Singleton
+        if cls._instance is None:
+            cls._instance = super(EnvManager, cls).__new__(cls)
+        return cls._instance
+
+    def _get_required_env(self, key: str) -> str:
+        """
+        Busca uma variável de ambiente pelo nome (key).
+        Levanta um erro se a variável não estiver definida.
+        """
+        value = os.getenv(key)
+        if value is None:
+            # Mensagem de erro clara para depuração
+            raise EnvironmentError(
+                f"Variável de ambiente obrigatória '{key}' não encontrada. "
+                "Verifique seu arquivo 'token.env' ou as variáveis do sistema."
+            )
+        return value
+
+    def _get_optional_env(self, key: str, default: str| None = None) -> str | None:
+        """
+        Busca uma variável de ambiente opcional.
+        Retorna um valor padrão (default) se não estiver definida.
+        """
+        return os.getenv(key, default)
+
+    # --- Métodos de Acesso Específicos ---
+
+    def get_hugging_face_token(self) -> str:
+        """Retorna o token do Hugging Face (obrigatório)."""
+        return self._get_required_env("HF_TOKEN")

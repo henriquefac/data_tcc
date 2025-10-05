@@ -1,2 +1,2 @@
-from .config import Config, DirManager, TempDirManager
-__all__ = ["Config", "DirManager", "TempDirManager"]
+from .config import Config,EnvManager ,DirManager, TempDirManager
+__all__ = ["Config", "DirManager", "TempDirManager", "EnvManager"]

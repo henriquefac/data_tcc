@@ -4,7 +4,7 @@ import io
 
 
 
-def apply_vad(audio_buffer:io.BytesIO, aggressiveness:int = 0)->io.BytesIO:
+def apply_vad(audio_buffer:io.BytesIO, aggressiveness:int = 1)->io.BytesIO:
     audio_buffer.seek(0)
 
     with wave.open(audio_buffer, "rb") as wave_file:

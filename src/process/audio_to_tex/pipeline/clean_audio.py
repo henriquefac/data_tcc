@@ -27,5 +27,9 @@ def denoise_audioIO(audio_buffer: io.BytesIO, sample_rate:int=16000) -> io.Bytes
     if proc.returncode != 0 or not data:
         raise RuntimeError(f"Erro no denoise: {err.decode() if err else 'sem saída'}")
 
-    # criar novo buffer em vez de sobrescrever o existente
-    return io.BytesIO(data)
+    audio_buffer.seek(0)
+    audio_buffer.truncate(0)
+    audio_buffer.write(data)
+    audio_buffer.seek(0)
+
+    return audio_buffer

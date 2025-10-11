@@ -44,24 +44,12 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
 
         # 3. Extrai os segmentos de forma compatível com versões antigas e novas
         segments = []
-        try:
-            # 🔹 Formato antigo do Pyannote
-            for turn, speaker in diarization_result.speaker_diarization:
+        for turn, speaker in diarization_result.speaker_diarization:
                 segments.append({
-                    "start": f"{turn.start:.1f}s",
-                    "end": f"{turn.end:.1f}s",
+                    "start": turn.start,
+                    "end": turn.end,
                     "speaker": speaker
                 })
-        except AttributeError:
-            # 🔹 Novo formato (DiarizeOutput)
-            for label in diarization_result.labels():
-                for turn in diarization_result.get_timeline(label):
-                    segments.append({
-                        "start": turn.start,
-                        "end": turn.end,
-                        "speaker": label
-                    })
-
-        return segments
+        return segments, DEVICE
 
     return diarization_io

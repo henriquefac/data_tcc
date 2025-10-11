@@ -6,6 +6,13 @@ import torch
 import io
 import torchaudio  # <--- Adicione esta linha
 from pyannote.audio.pipelines.utils.hook import ProgressHook 
+
+import pickle
+
+# Salvar json resultado da diarização
+files_dir = Config.get_dir_files()
+diarizacao_test_dir = files_dir.create_dir("diarizacao_data")
+
 # --- 1. Configuração e Checagem de Hardware ---
 print("--- Configuração de Hardware ---")
 print(f"CUDA disponível: {torch.cuda.is_available()}")
@@ -36,6 +43,11 @@ except IndexError:
     print("ERRO: Não foi possível encontrar o arquivo de áudio na posição [1].")
     exit()
 
+file_name = file_path.stem
+
+# diretório de output dda diarizção desse arquivo
+diarizacao_output_dir = diarizacao_test_dir.create_dir(f"{file_name}_diarizacao")
+
 # --- 4. Pipeline de Pré-Processamento ---
 print("\n--- Pré-Processamento de Áudio ---")
 # O objeto final após o pré-processamento é necessário para a diarização
@@ -47,58 +59,43 @@ print(f"Pré-processamento concluído. Tamanho final do buffer: {len(wav_buffer.
 
 # --- 5. Diarização com Observação de Progresso ---
 print("\n--- Diarização de Fala (Pyannote) ---")
-
 if hf_token:
+    # 1. Carrega a função de diarização (e o pipeline global, se ainda não estiver carregado)
+    # NOTA: O pipeline global não é retornado, mas é acessado via closure.
     diarize_io_function = pipeline.get_diarization_function(hf_token)
     
     print("Iniciando diarização com barra de progresso...")
     
-    # O pipeline interno precisa ser chamado com o hook
-    
-    # Para fazer o ProgressHook funcionar, precisamos que a função diarization_io
-    # (retornada por get_diarization_function) aceite o 'hook' como argumento.
-    # No entanto, se ela não aceita, o uso mais simples é diretamente na chamada do pipeline:
-    
-    # **AVISO:** Como o pipeline em pyannote só pode ser chamado com 'hook' se o pipeline
-    # interno for exposto, a forma mais robusta é adaptar a chamada aqui:
-    
     try:
-        # Carrega o pipeline GLOBALMENTE (se já não estiver carregado)
-        diarization_pipeline = diarize_io_function.__closure__[0].cell_contents if diarize_io_function.__closure__ else None
+        # 2. CHAMA A FUNÇÃO. O ProgressHook é ATIVADO INTERNAMENTE.
+        # A função retorna os segmentos e o DEVICE.
+        segments_list, device_used = diarize_io_function(wav_buffer)
         
-        if diarization_pipeline is None:
-            # Se a função não expôs o pipeline (caso o código original tenha sido alterado)
-            # Faremos a chamada sem o hook, mas com aviso.
-            print("AVISO: Não foi possível acessar o pipeline interno. Rodando sem ProgressHook.")
-            segments = diarize_io_function(wav_buffer)
-        else:
-            # 5.1 OTIMIZAÇÃO: Carrega o waveform para a memória
-            wav_buffer.seek(0)
-            waveform, sample_rate = torchaudio.load(wav_buffer)
-            waveform = waveform.to(diarization_pipeline.device)
+        # 3. Recalcula o tempo total para o dicionário final
+        wav_buffer.seek(0)
+        waveform, sample_rate = torchaudio.load(wav_buffer)
+        total_time = len(waveform[0]) / sample_rate 
+        
+        segments = {
+            "segments" : segments_list,
+            "total_len" : total_time,
+            "sample_rate": sample_rate,
+            "device": str(device_used) # Adiciona o dispositivo usado
+        }
 
-            # 5.2 CHAMADA COM HOOK: Envolve a execução do pipeline no ProgressHook
-            with ProgressHook() as hook:
-                output = diarization_pipeline(
-                    {"waveform": waveform, "sample_rate": sample_rate},
-                    hook=hook
-                )
-            
-            # 5.3 Processa o resultado do output do pipeline
-            segments = []
-            for segment, _, speaker in output.itertracks(yield_label=True):
-                segments.append({
-                    "start": segment.start,
-                    "end": segment.end,
-                    "speaker": speaker
-                })
-    
     except Exception as e:
         print(f"ERRO durante a diarização: {e}")
-        segments = []
-
+        segments = {} 
+        # ... (restante do salvamento e fim do script) ...
     print("\nSegmentação Concluída:")
     print(dumps(segments, indent=4))
+
+    # salvar diarização como json
+    # criar caminho
+    output_path = diarizacao_output_dir.create_file_path(f"diarizacao_{file_name}", "pkl", overwrite=True)
+    with open(output_path, "wb") as fh:
+        pickle.dump(segments, fh)
+
 else:
     print("IGNORADO: Diarização requer o token HF que não foi encontrado.")
 

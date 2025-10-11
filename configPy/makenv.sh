@@ -25,6 +25,17 @@ else
 	echo "Diretório 'src' já existe."
 fi
 
+
+if [[ ! -d "files/output" ]]; then
+	echo "Criando diretório 'files/output'"
+	mkdir files/output
+	touch files/output/output.txt
+	echo "Diretório resevardo para os resultados do processamento" >> files/output/output.txt
+else
+	echo "Diretório 'files/output' já existe"
+fi
+
+
 # --- Configuração do Ambiente Virtual ---
 echo "--- Configurando Ambiente Python (.venv) ---"
 

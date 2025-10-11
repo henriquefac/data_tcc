@@ -7,11 +7,20 @@ import torch
 pipeline: Pipeline | None = None
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# criar função para unir dois segmentos que são vizinhos
+# que possuem o mesmo falante
+# e possuem uma diferença de tempo muito pequena
+def unify_segments(segment_1:dict[str, str | int], segment_2: dict[str, str | int])->dict[str, str | int]:
+    new_seg = {}
+    new_seg["start"] = segment_1["start"]
+    new_seg["end"] = segment_2["end"]
+    new_seg["speaker"] = segment_2["speaker"]
+    
+    return new_seg
+
+
 
 def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarization-community-1"):
-    """
-    Retorna uma função configurada para rodar diarização de áudio diretamente de um buffer (BytesIO).
-    """
     global pipeline
 
     if pipeline is None:
@@ -20,13 +29,8 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
         pipeline.to(DEVICE)
 
     def diarization_io(audio_buffer: io.BytesIO):
-        """
-        Executa a diarização diretamente no buffer de memória.
-        Retorna a transcrição temporal de falantes.
-        """
         audio_buffer.seek(0)
 
-        # 1. Carrega o áudio diretamente do buffer
         try:
             waveform, sample_rate = torchaudio.load(audio_buffer)
         except Exception as e:
@@ -34,7 +38,6 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
 
         waveform = waveform.to(DEVICE)
 
-        # 2. Executa a diarização com barra de progresso
         print("Iniciando diarização...")
         with ProgressHook() as hook:
             diarization_result = pipeline(
@@ -42,7 +45,6 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
                 hook=hook
             )
 
-        # 3. Extrai os segmentos de forma compatível com versões antigas e novas
         segments = []
         for turn, speaker in diarization_result.speaker_diarization:
                 segments.append({
@@ -51,5 +53,6 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
                     "speaker": speaker
                 })
         return segments, DEVICE
+    
 
     return diarization_io

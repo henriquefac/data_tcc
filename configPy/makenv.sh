@@ -50,8 +50,8 @@ if [[ ! -d ".venv" ]]; then
 	# Isso garante que a variável PYTHONPATH e JUPYTER_PATH sejam definidas sempre que o venv for ativado
 	echo "" >> .venv/bin/activate
 	echo "# Variáveis adicionadas pelo script de setup" >> .venv/bin/activate
-	echo "export PYTHONPATH=$(pwd)" >> .venv/bin/activate
-	echo "export JUPYTER_PATH=$(pwd)" >> .venv/bin/activate
+	echo "export PYTHONPATH=\$(pwd)" >> .venv/bin/activate
+	echo "export JUPYTER_PATH=\$(pwd)" >> .venv/bin/activate
 
 	pip install python-dotenv # Instala pacote básico
 
@@ -61,6 +61,8 @@ if [[ ! -d ".venv" ]]; then
 	else
 		echo "Aviso: 'requirements.txt' não encontrado. Nenhum pacote adicional foi instalado."
 	fi
+
+	echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(pwd)/.venv/lib/python3.12/site-packages/nvidia/cublas/lib:\$(pwd)/.venv/lib/python3.12/site-packages/nvidia/cudnn/lib" >> .venv/bin/activat
 
 	deactivate # Desativa o ambiente
 else
@@ -89,6 +91,7 @@ if [[ ! -f "$MODEL_FILE" ]]; then
 else
 	echo "Modelo já existe em $MODEL_FILE"
 fi
+
 
 echo "---"
 echo "Setup concluído! O ambiente virtual está ATIVADO."

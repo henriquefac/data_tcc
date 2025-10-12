@@ -4,20 +4,15 @@ import torchaudio
 import io
 import torch
 
+from .merge_segments import apply_merge
+
+
 pipeline: Pipeline | None = None
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # criar função para unir dois segmentos que são vizinhos
 # que possuem o mesmo falante
 # e possuem uma diferença de tempo muito pequena
-def unify_segments(segment_1:dict[str, str | int], segment_2: dict[str, str | int])->dict[str, str | int]:
-    new_seg = {}
-    new_seg["start"] = segment_1["start"]
-    new_seg["end"] = segment_2["end"]
-    new_seg["speaker"] = segment_2["speaker"]
-    
-    return new_seg
-
 
 
 def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarization-community-1"):
@@ -26,6 +21,7 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
     if pipeline is None:
         print(f"Carregando modelo Pyannote para o dispositivo: {DEVICE}")
         pipeline = Pipeline.from_pretrained(repo, token=token)
+
         pipeline.to(DEVICE)
 
     def diarization_io(audio_buffer: io.BytesIO):
@@ -52,6 +48,9 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
                     "end": turn.end,
                     "speaker": speaker
                 })
+
+        segments = apply_merge(segments)
+
         return segments, DEVICE
     
 

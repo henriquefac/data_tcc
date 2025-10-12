@@ -1,5 +1,5 @@
 from src.download_files import pac_files, download_from_pac
-from src.process.audio_to_tex import pipeline
+from src.process.audio_to_tex import parts
 from configPy import Config, EnvManager, TempDirManager
 from json import dumps
 import torch
@@ -48,21 +48,21 @@ file_name = file_path.stem
 # diretório de output dda diarizção desse arquivo
 diarizacao_output_dir = diarizacao_test_dir.create_dir(f"{file_name}_diarizacao")
 
-# --- 4. Pipeline de Pré-Processamento ---
+# --- 4. parts de Pré-Processamento ---
 print("\n--- Pré-Processamento de Áudio ---")
 # O objeto final após o pré-processamento é necessário para a diarização
-wav_buffer: io.BytesIO = pipeline.webm_to_pcmIO(file_path)
-wav_buffer = pipeline.denoise_audioIO(wav_buffer)
-wav_buffer = pipeline.apply_vad(wav_buffer)
+wav_buffer: io.BytesIO = parts.webm_to_pcmIO(file_path)
+wav_buffer = parts.denoise_audioIO(wav_buffer)
+wav_buffer = parts.apply_vad(wav_buffer)
 print(f"Pré-processamento concluído. Tamanho final do buffer: {len(wav_buffer.getvalue())} bytes")
 
 
 # --- 5. Diarização com Observação de Progresso ---
 print("\n--- Diarização de Fala (Pyannote) ---")
 if hf_token:
-    # 1. Carrega a função de diarização (e o pipeline global, se ainda não estiver carregado)
-    # NOTA: O pipeline global não é retornado, mas é acessado via closure.
-    diarize_io_function = pipeline.get_diarization_function(hf_token)
+    # 1. Carrega a função de diarização (e o parts global, se ainda não estiver carregado)
+    # NOTA: O parts global não é retornado, mas é acessado via closure.
+    diarize_io_function = parts.get_diarization_function(hf_token)
     
     print("Iniciando diarização com barra de progresso...")
     
@@ -76,25 +76,15 @@ if hf_token:
         waveform, sample_rate = torchaudio.load(wav_buffer)
         total_time = len(waveform[0]) / sample_rate 
         
-        segments = {
-            "segments" : segments_list,
-            "total_len" : total_time,
-            "sample_rate": sample_rate,
-            "device": str(device_used) # Adiciona o dispositivo usado
-        }
-
     except Exception as e:
         print(f"ERRO durante a diarização: {e}")
-        segments = {} 
+        segments_list = {} 
         # ... (restante do salvamento e fim do script) ...
     print("\nSegmentação Concluída:")
-    print(dumps(segments, indent=4))
+    print(dumps(segments_list, indent=4))
 
     # salvar diarização como json
     # criar caminho
-    output_path = diarizacao_output_dir.create_file_path(f"diarizacao_{file_name}", "pkl", overwrite=True)
-    with open(output_path, "wb") as fh:
-        pickle.dump(segments, fh)
 
 else:
     print("IGNORADO: Diarização requer o token HF que não foi encontrado.")

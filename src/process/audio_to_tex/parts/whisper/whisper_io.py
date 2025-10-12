@@ -32,7 +32,8 @@ def transcribe_with_whisper(audio_buffer:io.BytesIO, segments: list[dict]):
         segment_buffer.seek(0)
 
         transcription, _ = whisper.transcribe(segment_buffer, language="pt")
-
+        if DEVICE == "cuda":
+            torch.cuda.empty_cache()
         text = " ".join([t.text for t in transcription])
 
         result.append({

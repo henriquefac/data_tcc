@@ -27,9 +27,11 @@ else:
 
 # --- 2. Gerenciamento de Ambiente e Tokens ---
 print("\n--- Gerenciamento de Ambiente ---")
-envMan = EnvManager() 
+envMan = EnvManager()
+hf_env = envMan.huggingface()
 try:
-    hf_token = envMan.get_hugging_face_token()
+    hf_token = hf_env.HF_TOKEN
+    hf_diarize_model = hf_env.HF_DIARIZE_MODEL
     print("Token Hugging Face carregado.")
 except EnvironmentError as e:
     print(f"ERRO: {e}. O processo de diarização PODE FALHAR.")

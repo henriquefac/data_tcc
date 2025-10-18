@@ -1,5 +1,5 @@
 from src.download_files import pac_files, download_from_pac
-from src.process.audio_to_tex import pipeline
+from src.process.audio_to_tex import parts as pipeline
 from configPy import Config, EnvManager, TempDirManager
 from json import dumps
 import torch
@@ -10,7 +10,7 @@ print(torch.cuda.get_device_name(0))
 
 envMan = EnvManager()
 
-hf_token = envMan.get_hugging_face_token()
+hf_token = envMan.huggingface().HF_TOKEN
 
 
 pac = pac_files.get_files_by_year_link(1)

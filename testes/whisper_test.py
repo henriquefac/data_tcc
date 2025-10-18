@@ -83,7 +83,7 @@ if hf_token:
         
     except Exception as e:
         print(f"ERRO durante a diarização: {e}")
-        segments_list = {} 
+        segments_list = [] 
         # ... (restante do salvamento e fim do script) ...
     print("\nSegmentação Concluída:")
     print(f"Quantidade de segmentos: {len(segments_list)}")
@@ -92,7 +92,7 @@ if hf_token:
     # criar caminho
 
 else:
-    print("IGNORADO: Diarização requer o token HF que não foi encontrado.")
+    raise ValueError("IGNORADO: Diarização requer o token HF que não foi encontrado.")
 
 
 # Com a diarização feita, o buffer gerado pela detecção de voz é passado

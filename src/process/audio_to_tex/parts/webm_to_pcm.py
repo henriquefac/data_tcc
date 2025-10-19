@@ -3,7 +3,8 @@ import io
 from pathlib import Path
 
 
-def webm_to_pcmIO(path: Path, sample_rate: int = 16000, channels = 1)->io.BytesIO:
+def webm_to_pcmIO(path: Path|str, sample_rate: int = 16000, channels = 1)->io.BytesIO:
+    
     cmd = [
         "ffmpeg", "-i", str(path),
         "-f", "wav",
@@ -12,6 +13,7 @@ def webm_to_pcmIO(path: Path, sample_rate: int = 16000, channels = 1)->io.BytesI
         "-ar", str(sample_rate),
         "-hide_banner",
         "-loglevel", "error",
+        "-af", "loudnorm",
         "pipe:1"
     ]    
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)

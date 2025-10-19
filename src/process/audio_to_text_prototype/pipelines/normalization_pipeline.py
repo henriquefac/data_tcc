@@ -1,3 +1,4 @@
+
 # Aqui deve ser encapsulado todo o processo necessário para realizar 
 # o processamento de um arquivo de áudio
 
@@ -22,7 +23,7 @@
 
 import io
 from json import dumps
-from src.process.audio_to_tex import parts
+from src.process.audio_to_text_prototype import parts
 from configPy import EnvManager
 import torchaudio
 import torch
@@ -39,24 +40,24 @@ def process_single_audio(file_path_str: str,
 
 
         # converter para wav
-        wav_buffer: io.BytesIO = parts.webm_to_pcmIO(file_path_str)
+        wav_buffer: io.BytesIO = parts.preprocess.preprocess_audio_ffmpeg(file_path_str)
         # limpar arquivo de áudio dos ruídos
         if include_clean:
-            wav_buffer = parts.denoise_audioIO(wav_buffer)
+            wav_buffer = parts.remove_noise.denoise_audioIO(wav_buffer)
         # aplicar voice activity detection
         if include_vad:
-            wav_buffer = parts.apply_vad(wav_buffer)
+            wav_buffer = parts.voice_detection.apply_vad(wav_buffer)
 
         # Diarização
         segments_list = []
         if hf_token:
-            diarize_io_function = parts.get_diarization_function(hf_token, hf_diarize_model)
+            diarize_io_function = parts.diarize.get_diarization_function(hf_token, hf_diarize_model)
             segments_list, _ = diarize_io_function(wav_buffer)
         else:
             raise EnvironmentError("Token de acesso ao modelo hugging face não foi encontrado")
         wav_buffer.seek(0)
         
-        transcription = parts.transcribe_with_whisper(wav_buffer, segments_list)
+        transcription = parts.whisper.transcribe_with_whisper(wav_buffer, segments_list)
 
         result = {
             "transcription":transcription,

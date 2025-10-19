@@ -1,0 +1,57 @@
+from pyannote.audio import Pipeline
+from pyannote.audio.pipelines.utils.hook import ProgressHook
+import torchaudio
+import io
+import torch
+
+from .merge_segments import apply_merge
+
+
+pipeline: Pipeline | None = None
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# criar função para unir dois segmentos que são vizinhos
+# que possuem o mesmo falante
+# e possuem uma diferença de tempo muito pequena
+
+
+def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarization-community-1"):
+    global pipeline
+
+    if pipeline is None:
+        print(f"Carregando modelo Pyannote para o dispositivo: {DEVICE}")
+        pipeline = Pipeline.from_pretrained(repo, token=token)
+
+        pipeline.to(DEVICE)
+
+    def diarization_io(audio_buffer: io.BytesIO):
+        audio_buffer.seek(0)
+
+        try:
+            waveform, sample_rate = torchaudio.load(audio_buffer)
+        except Exception as e:
+            raise IOError(f"Falha ao carregar áudio do buffer: {e}")
+
+        waveform = waveform.to(DEVICE)
+
+        print("Iniciando diarização...")
+        with ProgressHook() as hook:
+            diarization_result = pipeline(
+                {"waveform": waveform, "sample_rate": sample_rate},
+                hook=hook
+            )
+
+        segments = []
+        for turn, speaker in diarization_result.speaker_diarization:
+                segments.append({
+                    "start": turn.start,
+                    "end": turn.end,
+                    "speaker": speaker
+                })
+
+        segments = apply_merge(segments)
+
+        return segments, DEVICE
+    
+
+    return diarization_io

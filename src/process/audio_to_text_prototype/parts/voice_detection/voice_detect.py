@@ -4,7 +4,7 @@ import io
 
 
 
-def apply_vad(audio_buffer:io.BytesIO, aggressiveness:int = 2)->io.BytesIO:
+def apply_vad(audio_buffer:io.BytesIO, aggressiveness:int = 1)->io.BytesIO:
     audio_buffer.seek(0)
 
     with wave.open(audio_buffer, "rb") as wave_file:
@@ -13,7 +13,7 @@ def apply_vad(audio_buffer:io.BytesIO, aggressiveness:int = 2)->io.BytesIO:
     
 
     vad = webrtcvad.Vad(aggressiveness) # detector de fala VAD
-    frame_ms = 30 # pode ser 10, 20 ou 30
+    frame_ms = 10 # pode ser 10, 20 ou 30
     frame_bytes = int(sample_rate * 2 * frame_ms / 1000) 
     # sampe por milesecond * 2 (quantidade de bytes por sample) * frames por milesegundo, depois passe para segundo
     frames = [pcm_data[i:i+frame_bytes] for i in range(0, len(pcm_data), frame_bytes)]

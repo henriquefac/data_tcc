@@ -14,6 +14,7 @@ def denoise_audioIO_norm(audio_buffer: io.BytesIO, sample_rate:int=16000) -> io.
         "ffmpeg", "-i", "pipe:0",
         "-af", af_filter, 
         "-f", "wav",
+        "-acodec", "pcm_s16le",
         "-ar", str(sample_rate),
         "pipe:1"
     ]

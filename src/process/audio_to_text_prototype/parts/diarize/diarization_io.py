@@ -25,12 +25,18 @@ def get_diarization_function(token: str, repo: str = "pyannote/speaker-diarizati
         pipeline.to(DEVICE)
 
     def diarization_io(audio_buffer: io.BytesIO):
+        if not isinstance(pipeline, Pipeline):
+            raise Exception("Isso ta errado, pipeline não foi instanciada")
+
         audio_buffer.seek(0)
 
         try:
             waveform, sample_rate = torchaudio.load(audio_buffer)
         except Exception as e:
             raise IOError(f"Falha ao carregar áudio do buffer: {e}")
+
+        if waveform.shape[0] > 1:
+            waveform = waveform.mean(dim=0, keepdim=True)
 
         waveform = waveform.to(DEVICE)
 

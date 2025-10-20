@@ -1,5 +1,5 @@
 /files/*
 /.venv/*
 **__pycache__
-
+token_2.env
 token.env

@@ -58,6 +58,13 @@ def get_threshold(segments_list: list[dict[str, float| str]]):
 
 
 
+def merge_dict(segment_left: dict[str, str | float], segment_right: dict[str, str | float]):
+
+    return {
+        "start":segment_left["start"],
+        "end":segment_right["end"],
+        "speaker":segment_left["speaker"]
+    }
 
 
 def merge_segments(segment_left: dict[str, str | float], segment_right: dict[str, str | float], threshold: float):
@@ -65,19 +72,17 @@ def merge_segments(segment_left: dict[str, str | float], segment_right: dict[str
     same_segment = segment_left["speaker"] == segment_right["speaker"]
     gap = float(segment_right["start"]) - float(segment_left["end"])
 
-    if gap < -1:
-        print("Gap: ", gap)
-        return {"start":segment_left["start"],"end":segment_right["end"],"speaker":segment_left["speaker"]}
+
+    if same_segment and gap <= threshold and gap > 0:
+        return merge_dict(segment_left, segment_right)
+
+    if not same_segment and gap < -1:
+        return merge_dict(segment_left, segment_right)
+    
+    return None
 
 
-    if not same_segment or gap >= threshold:
-        return None
 
-    return {
-        "start":segment_left["start"],
-        "end":segment_right["end"],
-        "speaker":segment_left["speaker"]
-    }
 
 def apply_merge_aux(segments_list: list[dict[str, float | str]], threshold: float) -> list[dict[str, float | str]]:
     """

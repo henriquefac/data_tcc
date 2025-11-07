@@ -7,6 +7,12 @@ ARTIFACT_KEYWORDS = [
     "música", "silêncio", "música alta", "[música]"
 ]
 
+
+# vicio delinguaem identificado
+ADDICT = [
+"do Tribunal Eleitoral."
+]
+
 def apply_segment_filters(transcription_segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Aplica filtros de qualidade semântica e textual aos segmentos transcritos.
@@ -38,6 +44,9 @@ def apply_segment_filters(transcription_segments: List[Dict[str, Any]]) -> List[
         if len(text) < MIN_CHAR_LENGTH:
             # print(f"DEBUG: Pulando por ser muito curto ({len(text)}): '{text[:15]}...'")
             continue
+
+        if text in ADDICT:
+           continue
 
         # 2. Filtro de Artefatos de Transcrição e Confiabilidade Baixa (Keywords filter)
         # Verifica se o texto contém palavras-chave indesejadas E não parece ser uma frase completa.

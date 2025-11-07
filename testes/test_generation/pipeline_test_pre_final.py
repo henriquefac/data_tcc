@@ -126,4 +126,4 @@ if __name__ == "__main__":
     print("\n" + "="*50)
     print("--- FIM DO PROCESSAMENTO ---")
     print("="*50)
-    # input("Pressione Enter para finalizar o script ---") # Mantido comentado para execução automática
+    input("Pressione Enter para finalizar o script ---") # Mantido comentado para execução automática

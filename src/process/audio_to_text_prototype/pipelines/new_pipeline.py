@@ -2,10 +2,10 @@ from src.process.audio_to_text_prototype.parts import preprocess, remove_noise, 
 from configPy import EnvManager
 import torch
 import io
-from typing import List, Dict, Any
+from .format_transcription import format_transcription_output 
 
 # ---------------------------------------------
-def process_single_audio(file_path_str: str) -> List[Dict[str, Any]]:
+def process_single_audio(file_path_str: str) -> str:
     """
     Executa o pipeline completo: Pré-processamento, Denoise, Diarização e Transcrição.
     
@@ -61,7 +61,7 @@ def process_single_audio(file_path_str: str) -> List[Dict[str, Any]]:
         if torch.cuda.is_available():
              torch.cuda.empty_cache()
 
-        return transcription
+        return format_transcription_output(transcription)
 
     except Exception as e:
         print(f"Erro fatal no processamento do arquivo {file_path_str}: {e}")
@@ -70,4 +70,4 @@ def process_single_audio(file_path_str: str) -> List[Dict[str, Any]]:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             
-        return []
+        return ""

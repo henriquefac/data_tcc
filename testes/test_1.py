@@ -1,5 +1,4 @@
-from src.download_files import pac_files
+# buscar links e urls desejadas
+from src.url_links import get_data_main
 
-pacs_10 = list(pac_files.get_files_by_porcent_link(pac_files.DotValue.DOT10))
-
-print(pacs_10[0])
+sessoes = get_data_main(get_data=True)

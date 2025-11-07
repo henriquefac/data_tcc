@@ -29,18 +29,11 @@ def normalize_text(text: str, lowercase: bool = False) -> str:
     return text.strip()
 
 
-def get_pdf_text(pdf_path: Path, output:DirManager ,preprocess: bool = True, lowercase: bool = False) -> None | str:
+def get_pdf_text_aux(pdf_path: Path, preprocess: bool = True, lowercase: bool = False) -> None | str:
     """
     Extrai texto diretamente de um PDF (sem OCR).
     Pode aplicar pré-processamento opcional no texto.
     """
-    namefile = pdf_path.stem
-
-    try:
-        output_file_path = output.create_file_path(namefile, "txt")
-    except Exception as e:
-        print(f"Arquivo já existe: {e}")
-        return None
     texts = []
 
     with pdfplumber.open(pdf_path) as pdf:
@@ -57,3 +50,9 @@ def get_pdf_text(pdf_path: Path, output:DirManager ,preprocess: bool = True, low
         return normalize_text(raw_text, lowercase=lowercase)
     return raw_text
 
+def get_pdf_text(pdf_path: Path, preprocess: bool = True, lowercase: bool= False) -> None | str:
+    try:
+        return get_pdf_text_aux(pdf_path, preprocess, lowercase)
+    except Exception as e:
+        print(f"Erro ao realizar extração clássica do texto do pdf {pdf_path}: {e}")
+        return ""

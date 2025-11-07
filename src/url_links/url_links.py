@@ -58,9 +58,9 @@ def get_dir_for_files(file_name)-> Path:
 # com os caminhos criados, tenho que escrever em cada um
 # uma linha para cada sessao, duas colunbas
 # URL da ata e link do vídeo no youtube
-def right_csv_file(file_name: str, data: list[list[str]])->None:
+def write_csv_file(file_name: str, data: list[list[str]])->None:
     # CRIAR ARQUIVO PARA ESCREVER
-    file_path = sessoes_dir.create_file_path(file_name, 'csv')
+    file_path = sessoes_dir.create_file_path(file_name, 'csv', overwrite=True)
 
     with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
@@ -71,6 +71,8 @@ def aux_get_data_json(json_data: dict):
     url_ata = [a["url"] for a in json_data.get("atas", [])]
     link_video = [a["link"] for a in json_data.get("videos", [])]
     if not url_ata or not link_video:
+        return None
+    if not "pdf" in url_ata:
         return None
     return [url_ata[0], link_video[0]]
 
@@ -108,7 +110,7 @@ def get_data_main(get_data: bool = False):
     # escrever arquivos
     for month, data in results:
         if data:
-            right_csv_file(month, data)
+            write_csv_file(month, data)
 
     return sessoes_dir
 if __name__ == "__main__":

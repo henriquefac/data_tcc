@@ -37,24 +37,17 @@ def ocr_page(img_buffer: BytesIO, page_num: int, tesseract_config: str = "", lan
     return page_num, clean_text(raw_text)
 
 
-def ocr_tesseract(
+def ocr_tesseract_aux(
     path: Path, 
-    output: DirManager, 
     dpi: int = 300, 
     workers: int = 10,
     oem: int = 3,          # default engine mode
     psm: int = 3,          # default page segmentation mode
     lang: str = "por"      # idioma
-) -> Path | None:
+) -> str:
     """
     Executa OCR em um PDF e salva o texto processado em arquivo .txt
     """
-    namefile = path.stem
-    try:
-        output_file_path = output.create_file_path(namefile, "txt")
-    except Exception as e:
-        print(f"Arquivo já existe: {e}")
-        return None
 
     print(f"Realizando OCR do arquivo: {path}")
 
@@ -87,7 +80,20 @@ def ocr_tesseract(
     full_text = "\n\n".join(text for _, text in results)
 
     # salva no arquivo
-    with open(output_file_path, "w", encoding="utf-8") as file:
-        file.write(full_text)
 
-    return output_file_path
+    return full_text
+
+
+def ocr_tesseract(
+    path: Path,
+    dpi: int = 300,
+    workers: int = 10,
+    oem: int = 3,
+    psm: int = 3,
+    lang: str = "por"
+) -> str:
+    try:
+        return ocr_tesseract(path, dpi, workers, oem, psm, lang)
+    except Exception as e:
+        print(f"Erro ao processar pdf {path.name}: {e}")
+        return ""

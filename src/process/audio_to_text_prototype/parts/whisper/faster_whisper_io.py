@@ -2,6 +2,7 @@ import torch
 import torchaudio
 import io
 from faster_whisper import WhisperModel
+import gc
 from .filter_segments import apply_segment_filters
 
 DEVICE = "cuda"
@@ -9,7 +10,7 @@ SIZE = "large"
 whisper = WhisperModel(model_size_or_path=SIZE, device=DEVICE)
 
 # --- Variável de Configuração de Precisão ---
-DEFAULT_PROMPT = "Transcrição de uma reunião do plenário no Tribunal Regional Eleitoral"
+DEFAULT_PROMPT = "Essa é uma reunião do plenário no Tribunal Regional Eleitoral"
 # ---------------------------------------------
 
 
@@ -21,7 +22,7 @@ def transcribe_with_faster_whisper(audio_buffer:io.BytesIO, segments: list[dict]
     wave_form, sample_rate = torchaudio.load(audio_buffer)
     
     # 2. Move a waveform completa para a GPU
-    wave_form = wave_form.to(DEVICE)
+    #wave_form = wave_form.to(DEVICE)
     
     # Garante que a waveform é mono (se não garantido antes)
     if wave_form.shape[0] > 1:
@@ -32,6 +33,8 @@ def transcribe_with_faster_whisper(audio_buffer:io.BytesIO, segments: list[dict]
         start, end = float(seg["start"]), float(seg["end"])
         speaker = seg["speaker"]
 
+        current_context = initial_prompt
+
         index_start = int(start * sample_rate)
         index_end = int(end * sample_rate)
 
@@ -39,19 +42,22 @@ def transcribe_with_faster_whisper(audio_buffer:io.BytesIO, segments: list[dict]
         segment_waveform = wave_form[:, index_start:index_end]
         
         # CONVERSÃO FINAL: Mova para CPU e converta para NumPy (entrada do Faster-Whisper)
-        audio_array = segment_waveform.squeeze().cpu().numpy()
+        audio_array = segment_waveform.squeeze().numpy()
         
         # 4. TRANSCRIÇÃO (com filtros de decodificação para precisão)
         transcription, _ = whisper.transcribe(
             audio_array, 
             language="pt",
-            initial_prompt=initial_prompt, 
+            initial_prompt=current_context, 
             beam_size=5, 
             repetition_penalty=1.2,
-            condition_on_previous_text=False 
+            condition_on_previous_text=True,
+            vad_filter=True
         )
 
         text = " ".join([t.text for t in transcription])
+
+        current_context = f"{current_context}\n{text.strip()}"
 
         result.append({
             "start":start,
@@ -60,6 +66,7 @@ def transcribe_with_faster_whisper(audio_buffer:io.BytesIO, segments: list[dict]
             "text": text.strip()
         })
         
+        gc.collect()
         torch.cuda.empty_cache()
 
     return apply_segment_filters(result)
